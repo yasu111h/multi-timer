@@ -39,9 +39,9 @@ fun TimerCard(
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
     var showLabelDialog by remember { mutableStateOf(false) }
-    var displayMillis by remember(timer.id, timer.status) { mutableLongStateOf(timer.remainingMillis) }
+    var displayMillis by remember(timer.id, timer.status, timer.remainingMillis) { mutableLongStateOf(timer.remainingMillis) }
 
-    LaunchedEffect(timer.id, timer.status, timer.startedAt) {
+    LaunchedEffect(timer.id, timer.status, timer.startedAt, timer.remainingMillis) {
         if (timer.status == TimerStatus.RUNNING && timer.startedAt != null) {
             while (true) {
                 val elapsed = System.currentTimeMillis() - timer.startedAt

@@ -1,5 +1,7 @@
 package com.multitimer.app.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,11 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 
 @Composable
 fun TimePickerDialog(
@@ -31,91 +35,110 @@ fun TimePickerDialog(
     var selectedMinute by remember { mutableIntStateOf(initialMinutes) }
     var selectedSecond by remember { mutableIntStateOf(initialSecs) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(24.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
-        title = {
-            Text(
-                "SET TIME",
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Light,
-                letterSpacing = 4.sp,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.primary
+    Dialog(onDismissRequest = onDismiss) {
+        val borderColor = MaterialTheme.colorScheme.primary
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.border(
+                width = 1.dp,
+                brush = Brush.horizontalGradient(
+                    listOf(borderColor, borderColor.copy(alpha = 0.2f))
+                ),
+                shape = RoundedCornerShape(24.dp)
             )
-        },
-        text = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                NumberWheelPicker(
-                    range = 0..99,
-                    initial = selectedHour,
-                    modifier = Modifier.weight(1f)
-                ) { selectedHour = it }
-
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp)) {
                 Text(
-                    "h",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "SET TIME",
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 18.sp
+                    fontWeight = FontWeight.Light,
+                    letterSpacing = 4.sp,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.primary
                 )
-                Spacer(Modifier.width(4.dp))
 
-                NumberWheelPicker(
-                    range = 0..59,
-                    initial = selectedMinute,
-                    modifier = Modifier.weight(1f)
-                ) { selectedMinute = it }
+                Spacer(Modifier.height(16.dp))
 
-                Text(
-                    "m",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 18.sp
-                )
-                Spacer(Modifier.width(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    NumberWheelPicker(
+                        range = 0..99,
+                        initial = selectedHour,
+                        modifier = Modifier.weight(1f)
+                    ) { selectedHour = it }
 
-                NumberWheelPicker(
-                    range = 0..59,
-                    initial = selectedSecond,
-                    modifier = Modifier.weight(1f)
-                ) { selectedSecond = it }
+                    Text(
+                        "h",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 18.sp
+                    )
+                    Spacer(Modifier.width(4.dp))
 
-                Text(
-                    "s",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 18.sp
-                )
-            }
-        },
-        confirmButton = {
-            val totalMillis = (selectedHour * 3600L + selectedMinute * 60L + selectedSecond) * 1000L
-            TextButton(
-                onClick = { if (totalMillis > 0) onConfirm(totalMillis) },
-                enabled = totalMillis > 0
-            ) {
-                Text(
-                    "SET",
-                    fontFamily = FontFamily.Monospace,
-                    color = if (totalMillis > 0) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("CANCEL", fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    NumberWheelPicker(
+                        range = 0..59,
+                        initial = selectedMinute,
+                        modifier = Modifier.weight(1f)
+                    ) { selectedMinute = it }
+
+                    Text(
+                        "m",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 18.sp
+                    )
+                    Spacer(Modifier.width(4.dp))
+
+                    NumberWheelPicker(
+                        range = 0..59,
+                        initial = selectedSecond,
+                        modifier = Modifier.weight(1f)
+                    ) { selectedSecond = it }
+
+                    Text(
+                        "s",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 18.sp
+                    )
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                val totalMillis = (selectedHour * 3600L + selectedMinute * 60L + selectedSecond) * 1000L
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            "CANCEL",
+                            fontFamily = FontFamily.Monospace,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = { if (totalMillis > 0) onConfirm(totalMillis) },
+                        enabled = totalMillis > 0
+                    ) {
+                        Text(
+                            "SET",
+                            fontFamily = FontFamily.Monospace,
+                            color = if (totalMillis > 0) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
+                    }
+                }
             }
         }
-    )
+    }
 }
 
 @Composable
@@ -146,6 +169,18 @@ fun NumberWheelPicker(
     }
 
     Box(modifier = modifier.height(itemHeightDp * visibleItems)) {
+        // 選択中行のハイライト背景
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .height(itemHeightDp)
+                .background(
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(8.dp)
+                )
+        )
+
         LazyColumn(
             state = listState,
             flingBehavior = snapBehavior,
