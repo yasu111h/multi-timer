@@ -26,6 +26,7 @@ class TimerForegroundService : Service() {
 
     companion object {
         const val CHANNEL_ID = "timer_channel"
+        const val CHANNEL_ID_ALERT = "timer_alert_channel"
         const val NOTIFICATION_ID = 1
         const val ACTION_START = "action.START"
         const val ACTION_PAUSE = "action.PAUSE"
@@ -54,7 +55,7 @@ class TimerForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification("タイマー動作中"))
+        startForeground(NOTIFICATION_ID, buildSilentNotification("Running in background"))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -99,22 +100,43 @@ class TimerForegroundService : Service() {
 
     private fun showTimerFinishedNotification(label: String) {
         val manager = getSystemService(NotificationManager::class.java)
-        val notification = buildNotification(
-            if (label.isNotEmpty()) "「$label」が終了しました" else "タイマーが終了しました"
-        )
+        val text = if (label.isNotEmpty()) "$label finished" else "Timer finished"
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID_ALERT)
+            .setContentTitle("TICK")
+            .setContentText(text)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setAutoCancel(true)
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    this, 0,
+                    Intent(this, MainActivity::class.java),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            )
+            .build()
         manager.notify(System.currentTimeMillis().toInt(), notification)
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, "タイマー通知", NotificationManager.IMPORTANCE_HIGH)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        val manager = getSystemService(NotificationManager::class.java)
+        // サービス動作中の通知（サイレント・低優先度）
+        val silentChannel = NotificationChannel(CHANNEL_ID, "Timer Service", NotificationManager.IMPORTANCE_LOW).apply {
+            setSound(null, null)
+            enableVibration(false)
+        }
+        // タイマー終了アラート通知（高優先度）
+        val alertChannel = NotificationChannel(CHANNEL_ID_ALERT, "Timer Alerts", NotificationManager.IMPORTANCE_HIGH)
+        manager.createNotificationChannel(silentChannel)
+        manager.createNotificationChannel(alertChannel)
     }
 
-    private fun buildNotification(text: String) =
+    private fun buildSilentNotification(text: String) =
         NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("MultiTimer")
+            .setContentTitle("TICK")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSilent(true)
+            .setOngoing(true)
             .setContentIntent(
                 PendingIntent.getActivity(
                     this, 0,

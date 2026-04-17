@@ -1,5 +1,6 @@
 package com.multitimer.app.ui.timer
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +39,7 @@ fun TimerScreen(viewModel: TimerViewModel = hiltViewModel()) {
                 OutlinedButton(
                     onClick = { viewModel.addTimer() },
                     modifier = Modifier.fillMaxWidth(),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)),
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     )

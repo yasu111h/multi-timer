@@ -16,7 +16,7 @@ class TimerRepository @Inject constructor(private val timerDao: TimerDao) {
 
     suspend fun addTimer(): Long {
         val count = timerDao.getTimerCount()
-        return timerDao.insertTimer(TimerEntity(sortOrder = count))
+        return timerDao.insertTimer(TimerEntity(label = "Timer ${count + 1}", sortOrder = count))
     }
 
     suspend fun deleteTimer(id: Long) = timerDao.deleteTimerById(id)

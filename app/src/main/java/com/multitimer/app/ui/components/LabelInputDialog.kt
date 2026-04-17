@@ -12,18 +12,18 @@ fun LabelInputDialog(
     var label by remember { mutableStateOf(initialLabel) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("ラベルを設定") },
+        title = { Text("SET LABEL") },
         text = {
             OutlinedTextField(
                 value = label,
                 onValueChange = { if (it.length <= 20) label = it },
-                label = { Text("ラベル名（最大20文字）") },
+                label = { Text("Name (max 20 chars)") },
                 supportingText = { Text("${label.length}/20") }
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(label) }) { Text("保存") }
+            TextButton(onClick = { onConfirm(label) }) { Text("SAVE") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("キャンセル") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("CANCEL") } }
     )
 }

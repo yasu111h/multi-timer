@@ -76,7 +76,7 @@ fun StopwatchCard(
                 .fillMaxWidth()
                 .border(
                     width = 1.dp,
-                    brush = Brush.horizontalGradient(listOf(accentColor.copy(alpha = 0.6f), Color.Transparent)),
+                    brush = Brush.horizontalGradient(listOf(accentColor, accentColor.copy(alpha = 0.2f))),
                     shape = RoundedCornerShape(16.dp)
                 )
         ) {
@@ -91,7 +91,7 @@ fun StopwatchCard(
                         text = stopwatch.label.ifEmpty { "— tap to name —" },
                         style = MaterialTheme.typography.labelLarge,
                         color = if (stopwatch.label.isEmpty())
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                         else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.clickable { showLabelDialog = true }
                     )
@@ -99,7 +99,7 @@ fun StopwatchCard(
                         Icon(
                             Icons.Default.Close, contentDescription = "削除",
                             modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
                     }
                 }
@@ -134,7 +134,7 @@ fun StopwatchCard(
                             .clip(CircleShape)
                             .background(
                                 if (stopwatch.status != StopwatchStatus.IDLE)
-                                    MaterialTheme.colorScheme.surfaceVariant
+                                    Color(0xFF2A2A2A)
                                 else Color.Transparent
                             )
                     ) {
@@ -143,7 +143,7 @@ fun StopwatchCard(
                             contentDescription = "リセット",
                             tint = if (stopwatch.status != StopwatchStatus.IDLE)
                                 MaterialTheme.colorScheme.onSurfaceVariant
-                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -184,7 +184,7 @@ fun StopwatchCard(
                             .clip(CircleShape)
                             .background(
                                 if (stopwatch.status == StopwatchStatus.RUNNING)
-                                    MaterialTheme.colorScheme.surfaceVariant
+                                    Color(0xFF2A2A2A)
                                 else Color.Transparent
                             )
                     ) {

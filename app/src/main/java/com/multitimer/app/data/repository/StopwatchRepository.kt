@@ -22,7 +22,7 @@ class StopwatchRepository @Inject constructor(
 
     suspend fun addStopwatch(): Long {
         val count = stopwatchDao.getStopwatchCount()
-        return stopwatchDao.insertStopwatch(StopwatchEntity(sortOrder = count))
+        return stopwatchDao.insertStopwatch(StopwatchEntity(label = "Stopwatch ${count + 1}", sortOrder = count))
     }
 
     suspend fun deleteStopwatch(id: Long) {
