@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.MultiTimer" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- スプラッシュ画面テーマ -->
+    <style name="Theme.MultiTimer.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0A0A0A</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenIconBackgroundColor">#0A0A0A</item>
+        <item name="postSplashScreenTheme">@style/Theme.MultiTimer</item>
+    </style>
 </resources>
