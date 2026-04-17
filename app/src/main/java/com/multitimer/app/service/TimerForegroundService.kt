@@ -6,7 +6,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
+import android.os.Build
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.multitimer.app.MainActivity
 import com.multitimer.app.R
@@ -81,6 +86,8 @@ class TimerForegroundService : Service() {
                 if (newRemaining <= 0) {
                     timerRepository.finishTimer(timerId)
                     showTimerFinishedNotification(timer.label)
+                    playCompletionSound()
+                    vibrate()
                     break
                 }
             }
@@ -145,6 +152,37 @@ class TimerForegroundService : Service() {
                 )
             )
             .build()
+
+    private fun playCompletionSound() {
+        try {
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val ringtone = RingtoneManager.getRingtone(applicationContext, soundUri)
+            ringtone?.play()
+        } catch (e: Exception) {
+            // サウンド再生失敗時は通知音に任せる
+        }
+    }
+
+    private fun vibrate() {
+        try {
+            val pattern = longArrayOf(0, 400, 200, 400, 200, 400)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vm.defaultVibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
+            } else {
+                @Suppress("DEPRECATION")
+                val v = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createWaveform(pattern, -1))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(pattern, -1)
+                }
+            }
+        } catch (e: Exception) {
+            // バイブレーション失敗時は無視
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
