@@ -1,13 +1,23 @@
 package com.multitimer.app.ui.components
 
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -29,8 +39,6 @@ fun TimerCard(
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
     var showLabelDialog by remember { mutableStateOf(false) }
-
-    // RUNNING中は実際の残り時間を画面でリアルタイム更新するためローカルstateを使う
     var displayMillis by remember(timer.id, timer.status) { mutableLongStateOf(timer.remainingMillis) }
 
     LaunchedEffect(timer.id, timer.status, timer.startedAt) {
@@ -46,69 +54,173 @@ fun TimerCard(
         }
     }
 
-    val cardColor = when (timer.status) {
-        TimerStatus.RUNNING -> MaterialTheme.colorScheme.primaryContainer
-        TimerStatus.PAUSED -> MaterialTheme.colorScheme.secondaryContainer
-        TimerStatus.FINISHED -> MaterialTheme.colorScheme.errorContainer
-        TimerStatus.IDLE -> MaterialTheme.colorScheme.surface
+    val progress = if (timer.totalMillis > 0) displayMillis.toFloat() / timer.totalMillis else 0f
+
+    val accentColor = when (timer.status) {
+        TimerStatus.RUNNING -> MaterialTheme.colorScheme.primary
+        TimerStatus.PAUSED -> MaterialTheme.colorScheme.secondary
+        TimerStatus.FINISHED -> MaterialTheme.colorScheme.error
+        TimerStatus.IDLE -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardColor)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = timer.label.ifEmpty { "ラベルなし" },
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.clickable { showLabelDialog = true }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.horizontalGradient(listOf(accentColor.copy(alpha = 0.6f), Color.Transparent)),
+                    shape = RoundedCornerShape(16.dp)
                 )
-                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "削除", modifier = Modifier.size(16.dp))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                // ヘッダー行
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timer.label.ifEmpty { "— tap to name —" },
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (timer.label.isEmpty())
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.clickable { showLabelDialog = true }
+                    )
+                    IconButton(
+                        onClick = onDelete,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "削除",
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        )
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(16.dp))
 
-            Text(
-                text = formatMillis(displayMillis),
-                fontSize = 48.sp,
-                fontFamily = FontFamily.Monospace,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clickable(enabled = timer.status == TimerStatus.IDLE) { showTimePicker = true }
-            )
+                // 時間表示
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = formatMillis(displayMillis),
+                        fontSize = 56.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Thin,
+                        color = accentColor,
+                        modifier = Modifier.clickable(enabled = timer.status == TimerStatus.IDLE) {
+                            showTimePicker = true
+                        }
+                    )
+                }
 
-            if (timer.status == TimerStatus.RUNNING) {
-                LinearProgressIndicator(
-                    progress = { if (timer.totalMillis > 0) displayMillis.toFloat() / timer.totalMillis else 0f },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                )
-            }
+                // プログレスバー
+                if (timer.status != TimerStatus.IDLE) {
+                    Spacer(Modifier.height(12.dp))
+                    LinearProgressIndicator(
+                        progress = { progress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .clip(RoundedCornerShape(1.dp)),
+                        color = accentColor,
+                        trackColor = accentColor.copy(alpha = 0.15f)
+                    )
+                }
 
-            Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(16.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                when (timer.status) {
-                    TimerStatus.IDLE -> {
-                        Button(onClick = onStart, modifier = Modifier.weight(1f)) { Text("スタート") }
+                // コントロールボタン
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // リセットボタン
+                    IconButton(
+                        onClick = onReset,
+                        enabled = timer.status != TimerStatus.IDLE,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (timer.status != TimerStatus.IDLE)
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                else Color.Transparent
+                            )
+                    ) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "リセット",
+                            tint = if (timer.status != TimerStatus.IDLE)
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
-                    TimerStatus.RUNNING -> {
-                        Button(onClick = onPause, modifier = Modifier.weight(1f)) { Text("一時停止") }
-                        OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("リセット") }
+
+                    Spacer(Modifier.width(24.dp))
+
+                    // メインボタン（スタート/一時停止/再開）
+                    val mainAction: () -> Unit = when (timer.status) {
+                        TimerStatus.IDLE -> onStart
+                        TimerStatus.RUNNING -> onPause
+                        TimerStatus.PAUSED -> onResume
+                        TimerStatus.FINISHED -> onReset
                     }
-                    TimerStatus.PAUSED -> {
-                        Button(onClick = onResume, modifier = Modifier.weight(1f)) { Text("再開") }
-                        OutlinedButton(onClick = onReset, modifier = Modifier.weight(1f)) { Text("リセット") }
+                    val mainIcon = when (timer.status) {
+                        TimerStatus.RUNNING -> Icons.Default.Pause
+                        else -> Icons.Default.PlayArrow
                     }
-                    TimerStatus.FINISHED -> {
-                        Button(onClick = onReset, modifier = Modifier.weight(1f)) { Text("リセット") }
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(accentColor)
+                            .clickable { mainAction() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            mainIcon,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(24.dp))
+
+                    // タイマー設定ボタン（IDLEのみ）
+                    IconButton(
+                        onClick = { showTimePicker = true },
+                        enabled = timer.status == TimerStatus.IDLE,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (timer.status == TimerStatus.IDLE)
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                else Color.Transparent
+                            )
+                    ) {
+                        Text(
+                            text = "SET",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Bold,
+                            color = if (timer.status == TimerStatus.IDLE)
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                        )
                     }
                 }
             }
