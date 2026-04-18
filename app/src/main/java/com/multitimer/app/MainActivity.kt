@@ -1,6 +1,8 @@
 package com.multitimer.app
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -13,15 +15,16 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        var keepSplash = true
         val splashScreen = installSplashScreen()
-        // スプラッシュを最初のフレーム描画後すぐに非表示（延長しない）
-        splashScreen.setKeepOnScreenCondition { false }
+        splashScreen.setKeepOnScreenCondition { keepSplash }
         super.onCreate(savedInstanceState)
-        // ナビゲーションバー・ステータスバーを透明（ダークアイコン）に設定
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
         )
+        // 1秒後にスプラッシュを非表示（裏側でメイン画面は既に準備済み）
+        Handler(Looper.getMainLooper()).postDelayed({ keepSplash = false }, 1000)
         setContent {
             MultiTimerTheme {
                 MainScreen()
