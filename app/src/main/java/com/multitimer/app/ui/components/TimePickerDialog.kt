@@ -35,13 +35,21 @@ fun TimePickerDialog(
     var selectedMinute by remember { mutableIntStateOf(initialMinutes) }
     var selectedSecond by remember { mutableIntStateOf(initialSecs) }
 
-    // クイックボタンで合計秒を加算し各フィールドに分配
+    // クイックボタン用リセットキー：値を外部から変更するたびに+1してホイールを再生成
+    var hourResetKey by remember { mutableIntStateOf(0) }
+    var minuteResetKey by remember { mutableIntStateOf(0) }
+    var secondResetKey by remember { mutableIntStateOf(0) }
+
     fun addSeconds(addSecs: Int) {
         val total = (selectedHour * 3600 + selectedMinute * 60 + selectedSecond + addSecs)
             .coerceIn(0, 99 * 3600 + 59 * 60 + 59)
         selectedHour = total / 3600
         selectedMinute = (total % 3600) / 60
         selectedSecond = total % 60
+        // キーをインクリメントしてホイールを再生成（正しい初期位置で表示）
+        hourResetKey++
+        minuteResetKey++
+        secondResetKey++
     }
 
     Dialog(onDismissRequest = onDismiss) {
@@ -70,19 +78,21 @@ fun TimePickerDialog(
                 Spacer(Modifier.height(16.dp))
 
                 // ホイールピッカー
+                // key()でラップすることで、クイックボタン押下後に正しい初期位置で再生成される
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp),
+                        .height(220.dp),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    NumberWheelPicker(
-                        range = 0..99,
-                        initial = initialHours,
-                        scrollToValue = selectedHour,
-                        modifier = Modifier.weight(1f)
-                    ) { selectedHour = it }
+                    key(hourResetKey) {
+                        NumberWheelPicker(
+                            range = 0..99,
+                            initial = selectedHour,
+                            modifier = Modifier.weight(1f)
+                        ) { selectedHour = it }
+                    }
 
                     Text(
                         "h",
@@ -92,12 +102,13 @@ fun TimePickerDialog(
                     )
                     Spacer(Modifier.width(4.dp))
 
-                    NumberWheelPicker(
-                        range = 0..59,
-                        initial = initialMinutes,
-                        scrollToValue = selectedMinute,
-                        modifier = Modifier.weight(1f)
-                    ) { selectedMinute = it }
+                    key(minuteResetKey) {
+                        NumberWheelPicker(
+                            range = 0..59,
+                            initial = selectedMinute,
+                            modifier = Modifier.weight(1f)
+                        ) { selectedMinute = it }
+                    }
 
                     Text(
                         "m",
@@ -107,12 +118,13 @@ fun TimePickerDialog(
                     )
                     Spacer(Modifier.width(4.dp))
 
-                    NumberWheelPicker(
-                        range = 0..59,
-                        initial = initialSecs,
-                        scrollToValue = selectedSecond,
-                        modifier = Modifier.weight(1f)
-                    ) { selectedSecond = it }
+                    key(secondResetKey) {
+                        NumberWheelPicker(
+                            range = 0..59,
+                            initial = selectedSecond,
+                            modifier = Modifier.weight(1f)
+                        ) { selectedSecond = it }
+                    }
 
                     Text(
                         "s",
@@ -124,7 +136,7 @@ fun TimePickerDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                // クイック追加ボタン（+は便利、-は不要：ホイールで任意値設定可能）
+                // クイック追加ボタン
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -193,7 +205,6 @@ fun TimePickerDialog(
 fun NumberWheelPicker(
     range: IntRange,
     initial: Int,
-    scrollToValue: Int = initial,
     modifier: Modifier = Modifier,
     onValueChange: (Int) -> Unit
 ) {
@@ -201,18 +212,14 @@ fun NumberWheelPicker(
     val visibleItems = 5
     val itemHeightDp = 44.dp
 
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = (initial - range.first).coerceIn(0, itemCount - 1)
-    )
+    // 初期インデックスで正しい位置からスタート
+    // key()で再生成されるため、initial変更時は常に正しい位置が設定される
+    val initialIndex = (initial - range.first).coerceIn(0, itemCount - 1)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val snapBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
-    // 外部からのスクロール制御（クイックボタン・初期位置の確定）
-    // scrollOffset = 0 にすることでセンター位置に正確に揃える
-    LaunchedEffect(scrollToValue) {
-        val targetIndex = (scrollToValue - range.first).coerceIn(0, itemCount - 1)
-        listState.animateScrollToItem(targetIndex, scrollOffset = 0)
-    }
-
+    // ユーザーのスクロールで firstVisibleItemIndex が変化したら値を通知
+    // プログラマティックなスクロールはないため、このLaunchedEffectはユーザー操作のみに反応する
     val selectedIndex by remember {
         derivedStateOf { listState.firstVisibleItemIndex }
     }
@@ -237,7 +244,7 @@ fun NumberWheelPicker(
         LazyColumn(
             state = listState,
             flingBehavior = snapBehavior,
-            contentPadding = PaddingValues(vertical = itemHeightDp * (visibleItems / 2)),
+            contentPadding = PaddingValues(vertical = itemHeightDp * 2),
             modifier = Modifier.fillMaxSize()
         ) {
             items(itemCount) { index ->

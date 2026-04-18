@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.multitimer.app.MainActivity
 import com.multitimer.app.R
 import com.multitimer.app.data.db.entity.TimerStatus
+import com.multitimer.app.data.repository.SettingsRepository
 import com.multitimer.app.data.repository.TimerRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -25,6 +26,7 @@ import javax.inject.Inject
 class TimerForegroundService : Service() {
 
     @Inject lateinit var timerRepository: TimerRepository
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val tickerJobs = mutableMapOf<Long, Job>()
@@ -86,8 +88,12 @@ class TimerForegroundService : Service() {
                 if (newRemaining <= 0) {
                     timerRepository.finishTimer(timerId)
                     showTimerFinishedNotification(timer.label)
-                    playCompletionSound()
-                    vibrate()
+                    if (settingsRepository.isSoundEnabled()) {
+                        withContext(Dispatchers.Main) { playCompletionSound() }
+                    }
+                    if (settingsRepository.isVibrationEnabled()) {
+                        vibrate()
+                    }
                     break
                 }
             }
@@ -155,7 +161,8 @@ class TimerForegroundService : Service() {
 
     private fun playCompletionSound() {
         try {
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             val ringtone = RingtoneManager.getRingtone(applicationContext, soundUri)
             ringtone?.play()
         } catch (e: Exception) {

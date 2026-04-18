@@ -10,8 +10,8 @@ enum class TimerStatus { IDLE, RUNNING, PAUSED, FINISHED }
 data class TimerEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val label: String = "",
-    @ColumnInfo(name = "total_millis") val totalMillis: Long = 300_000L,
-    @ColumnInfo(name = "remaining_millis") val remainingMillis: Long = 300_000L,
+    @ColumnInfo(name = "total_millis") val totalMillis: Long = 10_000L,
+    @ColumnInfo(name = "remaining_millis") val remainingMillis: Long = 10_000L,
     val status: TimerStatus = TimerStatus.IDLE,
     @ColumnInfo(name = "started_at") val startedAt: Long? = null,
     @ColumnInfo(name = "paused_at") val pausedAt: Long? = null,
