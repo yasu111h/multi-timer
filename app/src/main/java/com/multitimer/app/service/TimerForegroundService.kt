@@ -36,7 +36,7 @@ class TimerForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "timer_channel"
         // チャンネルIDを変更して端末上の古いチャンネルを上書き（以前の設定が残っている場合の対処）
-        const val CHANNEL_ID_ALERT = "timer_alert_channel_v3"
+        const val CHANNEL_ID_ALERT = "timer_alert_channel_v4"
         const val NOTIFICATION_ID = 1
         const val ACTION_START = "action.START"
         const val ACTION_PAUSE = "action.PAUSE"
@@ -144,18 +144,12 @@ class TimerForegroundService : Service() {
             setSound(null, null)
             enableVibration(false)
         }
-        // タイマー終了アラート通知（高優先度・アラーム音でマナーモードも鳴る）
-        val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-        val alertAudioAttr = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ALARM)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build()
+        // タイマー終了アラート通知（音はMediaPlayerで制御するためチャンネルは無音）
         val alertChannel = NotificationChannel(
             CHANNEL_ID_ALERT, "Timer Alerts", NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            setSound(alarmSoundUri, alertAudioAttr)
-            enableVibration(false) // バイブはサービス側で制御
+            setSound(null, null)   // 通知チャンネルの音を無効（MediaPlayerで1回だけ鳴らす）
+            enableVibration(false) // バイブもサービス側で制御
         }
         manager.createNotificationChannel(silentChannel)
         manager.createNotificationChannel(alertChannel)
