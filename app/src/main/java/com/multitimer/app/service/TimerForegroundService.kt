@@ -6,6 +6,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
@@ -33,7 +35,8 @@ class TimerForegroundService : Service() {
 
     companion object {
         const val CHANNEL_ID = "timer_channel"
-        const val CHANNEL_ID_ALERT = "timer_alert_channel"
+        // チャンネルIDを変更して端末上の古いチャンネルを上書き（以前の設定が残っている場合の対処）
+        const val CHANNEL_ID_ALERT = "timer_alert_channel_v2"
         const val NOTIFICATION_ID = 1
         const val ACTION_START = "action.START"
         const val ACTION_PAUSE = "action.PAUSE"
@@ -88,12 +91,16 @@ class TimerForegroundService : Service() {
                 if (newRemaining <= 0) {
                     timerRepository.finishTimer(timerId)
                     showTimerFinishedNotification(timer.label)
-                    if (settingsRepository.isSoundEnabled()) {
-                        withContext(Dispatchers.Main) { playCompletionSound() }
+                    val soundEnabled = settingsRepository.isSoundEnabled()
+                    val vibrationEnabled = settingsRepository.isVibrationEnabled()
+                    withContext(Dispatchers.Main) {
+                        if (soundEnabled) playCompletionSound()
+                        if (vibrationEnabled) vibrate()
+                        // 音が鳴り終わるまでサービスを生かしておく
+                        // MediaPlayer の onCompletion でリリースされる
                     }
-                    if (settingsRepository.isVibrationEnabled()) {
-                        vibrate()
-                    }
+                    // 音の再生時間を確保してからサービスを停止（最低3秒）
+                    delay(3000L)
                     break
                 }
             }
@@ -113,7 +120,7 @@ class TimerForegroundService : Service() {
 
     private fun showTimerFinishedNotification(label: String) {
         val manager = getSystemService(NotificationManager::class.java)
-        val text = if (label.isNotEmpty()) "$label finished" else "Timer finished"
+        val text = if (label.isNotEmpty()) "$label - finished" else "Timer finished"
         val notification = NotificationCompat.Builder(this, CHANNEL_ID_ALERT)
             .setContentTitle("TICK")
             .setContentText(text)
@@ -137,8 +144,18 @@ class TimerForegroundService : Service() {
             setSound(null, null)
             enableVibration(false)
         }
-        // タイマー終了アラート通知（高優先度）
-        val alertChannel = NotificationChannel(CHANNEL_ID_ALERT, "Timer Alerts", NotificationManager.IMPORTANCE_HIGH)
+        // タイマー終了アラート通知（高優先度・サウンド付き）
+        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val alertAudioAttr = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        val alertChannel = NotificationChannel(
+            CHANNEL_ID_ALERT, "Timer Alerts", NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            setSound(defaultSoundUri, alertAudioAttr)
+            enableVibration(false) // バイブはサービス側で制御
+        }
         manager.createNotificationChannel(silentChannel)
         manager.createNotificationChannel(alertChannel)
     }
@@ -161,12 +178,22 @@ class TimerForegroundService : Service() {
 
     private fun playCompletionSound() {
         try {
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(applicationContext, soundUri)
-            ringtone?.play()
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                ?: return
+            val mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setDataSource(applicationContext, soundUri)
+                prepare()
+                setOnCompletionListener { release() }
+                start()
+            }
         } catch (e: Exception) {
-            // サウンド再生失敗時は通知音に任せる
+            // 再生失敗時は通知チャンネルの音に任せる
         }
     }
 
