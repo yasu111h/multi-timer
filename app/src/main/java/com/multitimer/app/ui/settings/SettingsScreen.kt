@@ -1,9 +1,9 @@
 package com.multitimer.app.ui.settings
 
-import android.app.Activity
 import android.content.Intent
 import android.provider.Settings
 import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,7 +46,7 @@ fun SettingsScreen(
     val keepScreenOn by viewModel.keepScreenOn.collectAsState()
 
     val context = LocalContext.current
-    val activity = context as? Activity
+    val activity = LocalActivity.current
 
     LaunchedEffect(keepScreenOn) {
         if (keepScreenOn) {

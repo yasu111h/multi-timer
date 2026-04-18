@@ -1,7 +1,7 @@
 package com.multitimer.app.ui
 
-import android.app.Activity
 import android.view.WindowManager
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,7 +30,7 @@ fun MainScreen() {
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val keepScreenOn by settingsViewModel.keepScreenOn.collectAsState()
 
-    val activity = LocalContext.current as? Activity
+    val activity = LocalActivity.current
     LaunchedEffect(keepScreenOn) {
         if (keepScreenOn) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
