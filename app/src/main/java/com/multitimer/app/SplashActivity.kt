@@ -22,7 +22,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import kotlinx.coroutines.delay
 
 /**
- * カスタムスプラッシュ画面：アイコンを画面幅の75%サイズで中央表示し、
+ * カスタムスプラッシュ画面：アイコンを画面サイズの40%で中央表示し、
  * 1秒後に MainActivity へ遷移する。
  * イマーシブモードで上下のシステムバーを非表示にする。
  */
@@ -52,7 +52,7 @@ class SplashActivity : ComponentActivity() {
                 Image(
                     painter = painterResource(R.drawable.splash_icon),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize(0.4f),
                     contentScale = ContentScale.Fit
                 )
             }
