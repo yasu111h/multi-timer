@@ -9,7 +9,7 @@
     <!-- スプラッシュ画面テーマ -->
     <style name="Theme.MultiTimer.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#0A0A0A</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_round</item>
         <item name="windowSplashScreenIconBackgroundColor">#0A0A0A</item>
         <item name="postSplashScreenTheme">@style/Theme.MultiTimer</item>
     </style>

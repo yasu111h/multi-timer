@@ -36,7 +36,7 @@ class TimerForegroundService : Service() {
     companion object {
         const val CHANNEL_ID = "timer_channel"
         // チャンネルIDを変更して端末上の古いチャンネルを上書き（以前の設定が残っている場合の対処）
-        const val CHANNEL_ID_ALERT = "timer_alert_channel_v2"
+        const val CHANNEL_ID_ALERT = "timer_alert_channel_v3"
         const val NOTIFICATION_ID = 1
         const val ACTION_START = "action.START"
         const val ACTION_PAUSE = "action.PAUSE"
@@ -144,16 +144,17 @@ class TimerForegroundService : Service() {
             setSound(null, null)
             enableVibration(false)
         }
-        // タイマー終了アラート通知（高優先度・サウンド付き）
-        val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        // タイマー終了アラート通知（高優先度・アラーム音でマナーモードも鳴る）
+        val alarmSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
         val alertAudioAttr = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setUsage(AudioAttributes.USAGE_ALARM)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
         val alertChannel = NotificationChannel(
             CHANNEL_ID_ALERT, "Timer Alerts", NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            setSound(defaultSoundUri, alertAudioAttr)
+            setSound(alarmSoundUri, alertAudioAttr)
             enableVibration(false) // バイブはサービス側で制御
         }
         manager.createNotificationChannel(silentChannel)
@@ -178,22 +179,31 @@ class TimerForegroundService : Service() {
 
     private fun playCompletionSound() {
         try {
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            // アラーム音を優先。なければ着信音→通知音の順で取得
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
                 ?: return
+            android.util.Log.d("TICK_SOUND", "再生する音声URI: $soundUri")
             val mediaPlayer = MediaPlayer().apply {
+                // USAGE_ALARM でマナーモード（サイレント）中でも鳴らす
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                        .setUsage(AudioAttributes.USAGE_ALARM)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
                 setDataSource(applicationContext, soundUri)
                 prepare()
-                setOnCompletionListener { release() }
+                setOnCompletionListener {
+                    android.util.Log.d("TICK_SOUND", "再生完了: $soundUri")
+                    it.release()
+                }
                 start()
             }
+            android.util.Log.d("TICK_SOUND", "再生開始成功: $soundUri")
         } catch (e: Exception) {
-            // 再生失敗時は通知チャンネルの音に任せる
+            android.util.Log.e("TICK_SOUND", "再生失敗: ${e.message}", e)
         }
     }
 
