@@ -16,15 +16,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MultiTimer">
 
+        <!-- カスタムスプラッシュ画面（ランチャー） -->
         <activity
-            android:name=".MainActivity"
+            android:name=".SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.MultiTimer.Splash">
+            android:theme="@style/Theme.MultiTimer">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- メイン画面（SplashActivityから起動） -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MultiTimer" />
 
         <service
             android:name=".service.TimerForegroundService"

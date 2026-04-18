@@ -3,6 +3,7 @@ package com.multitimer.app.ui
 import android.app.Activity
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -61,6 +62,7 @@ private fun MainContent(
     val tabs = listOf("TIMER", "STOPWATCH")
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0), // イマーシブモード：バー表示時もコンテンツをずらさない
         topBar = {
             TopAppBar(
                 title = {
