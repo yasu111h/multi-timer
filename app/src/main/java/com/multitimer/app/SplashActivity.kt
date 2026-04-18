@@ -50,7 +50,7 @@ class SplashActivity : ComponentActivity() {
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(R.mipmap.ic_launcher_round),
+                    painter = painterResource(R.drawable.splash_icon),
                     contentDescription = null,
                     modifier = Modifier.fillMaxWidth(0.75f),
                     contentScale = ContentScale.Fit
