@@ -52,7 +52,7 @@ class SplashActivity : ComponentActivity() {
                 Image(
                     painter = painterResource(R.drawable.splash_icon),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxWidth(0.75f),
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Fit
                 )
             }

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.provider.Settings
 import android.view.WindowManager
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -79,7 +80,8 @@ fun SettingsScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background
-                )
+                ),
+                windowInsets = WindowInsets(top = 24.dp)
             )
         },
         containerColor = MaterialTheme.colorScheme.background
