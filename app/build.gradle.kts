@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.multitimer.app"
+    namespace = "com.teamhappslab.tick"
     compileSdk = 36
 
     defaultConfig {
