@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
@@ -173,13 +172,7 @@ class TimerForegroundService : Service() {
 
     private fun playCompletionSound() {
         try {
-            // アラーム音を優先。なければ着信音→通知音の順で取得
-            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-                ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                ?: return
-            android.util.Log.d("TICK_SOUND", "再生する音声URI: $soundUri")
-            val mediaPlayer = MediaPlayer().apply {
+            val mediaPlayer = MediaPlayer.create(applicationContext, R.raw.alarm_sound)?.apply {
                 // USAGE_ALARM でマナーモード（サイレント）中でも鳴らす
                 setAudioAttributes(
                     AudioAttributes.Builder()
@@ -187,15 +180,13 @@ class TimerForegroundService : Service() {
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .build()
                 )
-                setDataSource(applicationContext, soundUri)
-                prepare()
                 setOnCompletionListener {
-                    android.util.Log.d("TICK_SOUND", "再生完了: $soundUri")
+                    android.util.Log.d("TICK_SOUND", "再生完了")
                     it.release()
                 }
                 start()
             }
-            android.util.Log.d("TICK_SOUND", "再生開始成功: $soundUri")
+            android.util.Log.d("TICK_SOUND", "再生開始: ${mediaPlayer != null}")
         } catch (e: Exception) {
             android.util.Log.e("TICK_SOUND", "再生失敗: ${e.message}", e)
         }
