@@ -3,6 +3,7 @@ package com.teamhappslab.tick.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teamhappslab.tick.data.repository.SettingsRepository
+import com.teamhappslab.tick.data.repository.TimerSoundType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,13 @@ class SettingsViewModel @Inject constructor(
             initialValue = true
         )
 
+    val soundType: StateFlow<TimerSoundType> = settingsRepository.soundType
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = TimerSoundType.DEFAULT
+        )
+
     fun setVibrationEnabled(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setVibrationEnabled(enabled) }
     }
@@ -46,5 +54,9 @@ class SettingsViewModel @Inject constructor(
 
     fun setKeepScreenOn(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setKeepScreenOn(enabled) }
+    }
+
+    fun setSoundType(type: TimerSoundType) {
+        viewModelScope.launch { settingsRepository.setSoundType(type) }
     }
 }

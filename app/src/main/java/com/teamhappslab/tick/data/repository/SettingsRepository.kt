@@ -3,6 +3,7 @@ package com.teamhappslab.tick.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +14,10 @@ import javax.inject.Singleton
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
+enum class TimerSoundType {
+    DEFAULT, LOUD
+}
+
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
@@ -21,6 +26,7 @@ class SettingsRepository @Inject constructor(
         val VIBRATION_ENABLED = booleanPreferencesKey("vibration_enabled")
         val SOUND_ENABLED = booleanPreferencesKey("sound_enabled")
         val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
+        val SOUND_TYPE = stringPreferencesKey("sound_type")
     }
 
     val vibrationEnabled: Flow<Boolean> = context.dataStore.data
@@ -31,6 +37,14 @@ class SettingsRepository @Inject constructor(
 
     val keepScreenOn: Flow<Boolean> = context.dataStore.data
         .map { prefs -> prefs[Keys.KEEP_SCREEN_ON] ?: true }
+
+    val soundType: Flow<TimerSoundType> = context.dataStore.data
+        .map { prefs ->
+            when (prefs[Keys.SOUND_TYPE]) {
+                TimerSoundType.LOUD.name -> TimerSoundType.LOUD
+                else -> TimerSoundType.DEFAULT
+            }
+        }
 
     suspend fun setVibrationEnabled(enabled: Boolean) {
         context.dataStore.edit { prefs -> prefs[Keys.VIBRATION_ENABLED] = enabled }
@@ -44,9 +58,16 @@ class SettingsRepository @Inject constructor(
         context.dataStore.edit { prefs -> prefs[Keys.KEEP_SCREEN_ON] = enabled }
     }
 
+    suspend fun setSoundType(type: TimerSoundType) {
+        context.dataStore.edit { prefs -> prefs[Keys.SOUND_TYPE] = type.name }
+    }
+
     suspend fun isVibrationEnabled(): Boolean =
         vibrationEnabled.first()
 
     suspend fun isSoundEnabled(): Boolean =
         soundEnabled.first()
+
+    suspend fun getSoundType(): TimerSoundType =
+        soundType.first()
 }

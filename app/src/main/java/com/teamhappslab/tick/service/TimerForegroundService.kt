@@ -19,6 +19,7 @@ import com.teamhappslab.tick.R
 import com.teamhappslab.tick.data.db.entity.TimerStatus
 import com.teamhappslab.tick.data.repository.SettingsRepository
 import com.teamhappslab.tick.data.repository.TimerRepository
+import com.teamhappslab.tick.data.repository.TimerSoundType
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -92,8 +93,9 @@ class TimerForegroundService : Service() {
                     showTimerFinishedNotification(timer.label)
                     val soundEnabled = settingsRepository.isSoundEnabled()
                     val vibrationEnabled = settingsRepository.isVibrationEnabled()
+                    val soundType = settingsRepository.getSoundType()
                     withContext(Dispatchers.Main) {
-                        if (soundEnabled) playCompletionSound()
+                        if (soundEnabled) playCompletionSound(soundType)
                         if (vibrationEnabled) vibrate()
                         // 音が鳴り終わるまでサービスを生かしておく
                         // MediaPlayer の onCompletion でリリースされる
@@ -170,9 +172,13 @@ class TimerForegroundService : Service() {
             )
             .build()
 
-    private fun playCompletionSound() {
+    private fun playCompletionSound(soundType: TimerSoundType) {
         try {
-            val mediaPlayer = MediaPlayer.create(applicationContext, R.raw.alarm_sound)?.apply {
+            val soundRes = when (soundType) {
+                TimerSoundType.LOUD -> R.raw.alarm_sound_loud
+                TimerSoundType.DEFAULT -> R.raw.alarm_sound
+            }
+            val mediaPlayer = MediaPlayer.create(applicationContext, soundRes)?.apply {
                 // USAGE_ALARM でマナーモード（サイレント）中でも鳴らす
                 setAudioAttributes(
                     AudioAttributes.Builder()
